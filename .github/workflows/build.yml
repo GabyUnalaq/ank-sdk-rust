@@ -111,39 +111,38 @@ jobs:
           path: target/x86_64-unknown-linux-musl/doc
 
   build:
-    name: Build - ${{ matrix.os }} - ${{ matrix.rust }}
-    runs-on: ${{ matrix.os }}-latest
+    name: Build - ${{ matrix.arch }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust: [stable, beta]
-        os: [ubuntu, windows]
+        arch: [amd64, arm64]
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{matrix.rust}}
+      - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-
-      - name: Setup Linux
-        if: matrix.os == 'ubuntu'
+      - name: Set target
+        id: set_target
+        run: |
+          if [ "${{ matrix.arch }}" == "amd64" ]; then
+            echo "TARGET=x86_64-unknown-linux-musl" >> $GITHUB_ENV
+          elif [ "${{ matrix.arch }}" == "arm64" ]; then
+            echo "TARGET=aarch64-unknown-linux-musl" >> $GITHUB_ENV
+          fi
+      - name: Setup
         run: |
           sudo apt -y install protobuf-compiler
-          rustup target add x86_64-unknown-linux-musl
+          rustup target add ${TARGET}
           cargo install just
-      - name: Setup Windows
-        if: matrix.os == 'windows'
-        run: |
-          choco install protoc
-          rustup target add x86_64-pc-windows-msvc
-          cargo install just
+      - name: Build - ${{ matrix.arch }}
+        run: cargo build ${TARGET} --release
 
-      - name: Build Linux
-        if: matrix.os == 'ubuntu'
-        run: cargo build
-      - name: Build Windows
-        if: matrix.os == 'windows'
-        run: cargo build --target x86_64-pc-windows-msvc
-  
+      - name: Upload binary - ${{ matrix.arch }}
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: binary-${{ matrix.arch }}
+          path: target/${TARGET}/release/
+
   publish-check:
     name: Publish Check
     runs-on: ubuntu-latest
