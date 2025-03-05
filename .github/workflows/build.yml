@@ -1,0 +1,125 @@
+name: Build
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release-**
+  workflow_dispatch:
+  workflow_call:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -Dwarnings
+  RUST_BACKTRACE: 1
+
+concurrency:
+  group: "build-${{ github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Check
+        run: cargo check
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Cargo.lock
+          path: Cargo.lock
+        continue-on-error: true
+
+  test:
+    name: Tests - ${{matrix.os}} - ${{matrix.rust}}
+    runs-on: ${{matrix.os}}-latest
+    strategy:
+      matrix:
+        rust: [stable, beta]
+        os: [ubuntu, windows]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{matrix.rust}}
+      - uses: Swatinem/rust-cache@v2
+      - name: Test
+        run: just utest
+
+  clippy:
+    name: Clippy - ${{matrix.rust}}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [stable, beta]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{matrix.rust}}
+      - uses: Swatinem/rust-cache@v2
+      - name: Clippy
+        run: just clippy
+  
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Docs
+        run: just doc
+  
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Coverage
+        run: just cov-html
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: target/llvm-cov/html
+  
+  build:
+    name: Build - ${{matrix.os}} - ${{matrix.rust}}
+    runs-on: ${{matrix.os}}-latest
+    strategy:
+      matrix:
+        rust: [stable, beta]
+        os: [ubuntu, windows]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{matrix.rust}}
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build
+  
+  publish-check:
+    name: Publish Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Publish Check
+        run: cargo publish --dry-run
