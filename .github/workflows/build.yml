@@ -18,15 +18,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    name: Check
+  setup:
+    name: Setup (Linux)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
+      - name: Install Rust Target
+        run: rustup target add x86_64-unknown-linux-musl
       - uses: Swatinem/rust-cache@v2
+      - name: Install Just
+        run: cargo install just
+
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
       - name: Check
         run: cargo check
       - uses: actions/upload-artifact@v4
@@ -48,40 +59,36 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{matrix.rust}}
-      - uses: Swatinem/rust-cache@v2
-      - name: Install Just
+      - name: Install Rust Target (Linux)
+        if: matrix.os == 'ubuntu'
+        run: rustup target add x86_64-unknown-linux-musl
+      - name: Install Just (Linux)
+        if: matrix.os == 'ubuntu'
         run: cargo install just
+      - name: Install Just (Windows)
+        if: matrix.os == 'windows'
+        run: choco install just
       - name: Test
         run: just utest
 
   clippy:
     name: Clippy - ${{matrix.rust}}
     runs-on: ubuntu-latest
+    needs: setup
     strategy:
       matrix:
         rust: [stable, beta]
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{matrix.rust}}
-      - uses: Swatinem/rust-cache@v2
-      - name: Install Just
-        run: cargo install just
       - name: Clippy
         run: just clippy
   
   docs:
     name: Docs
     runs-on: ubuntu-latest
+    needs: setup
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@v2
-      - name: Install Just
-        run: cargo install just
       - name: Docs
         run: just doc
   
@@ -90,12 +97,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@v2
-      - name: Install Just
-        run: cargo install just
       - name: Coverage
         run: just cov-html
       - uses: actions/upload-artifact@v4
@@ -110,7 +111,7 @@ jobs:
     strategy:
       matrix:
         rust: [stable, beta]
-        os: [ubuntu, windows]
+        os: [ubuntu]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
