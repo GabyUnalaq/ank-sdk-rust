@@ -38,3 +38,19 @@ jobs:
           name: Cargo.lock
           path: Cargo.lock
         continue-on-error: true
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Setup
+        run: |
+          sudo apt -y install protobuf-compiler
+          rustup target add x86_64-unknown-linux-musl
+          cargo install just
+      - name: Clippy
+        run: just clippy
