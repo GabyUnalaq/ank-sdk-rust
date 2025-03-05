@@ -134,7 +134,7 @@ jobs:
           rustup target add ${TARGET}
           cargo install just
       - name: Build - ${{ matrix.arch }}
-        run: cargo build ${TARGET} --release
+        run: cargo build --target ${TARGET} --release
 
       - name: Upload binary - ${{ matrix.arch }}
         uses: actions/upload-artifact@v4
