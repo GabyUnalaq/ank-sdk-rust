@@ -49,6 +49,8 @@ jobs:
         with:
           toolchain: ${{matrix.rust}}
       - uses: Swatinem/rust-cache@v2
+      - name: Install Just
+        run: cargo install just
       - name: Test
         run: just utest
 
@@ -64,6 +66,8 @@ jobs:
         with:
           toolchain: ${{matrix.rust}}
       - uses: Swatinem/rust-cache@v2
+      - name: Install Just
+        run: cargo install just
       - name: Clippy
         run: just clippy
   
@@ -76,6 +80,8 @@ jobs:
         with:
           toolchain: stable
       - uses: Swatinem/rust-cache@v2
+      - name: Install Just
+        run: cargo install just
       - name: Docs
         run: just doc
   
@@ -88,6 +94,8 @@ jobs:
         with:
           toolchain: stable
       - uses: Swatinem/rust-cache@v2
+      - name: Install Just
+        run: cargo install just
       - name: Coverage
         run: just cov-html
       - uses: actions/upload-artifact@v4
