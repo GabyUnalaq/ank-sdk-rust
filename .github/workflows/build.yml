@@ -123,6 +123,7 @@ jobs:
         with:
           toolchain: ${{matrix.rust}}
       - uses: Swatinem/rust-cache@v2
+
       - name: Setup Linux
         run: |
           sudo apt -y install protobuf-compiler
@@ -134,8 +135,13 @@ jobs:
           rustup target add x86_64-pc-windows-msvc
           cargo install just
         if: matrix.os == 'windows'
-      - name: Build
+
+      - name: Build Linux
         run: cargo build
+        if: matrix.os == 'ubuntu'
+      - name: Build Windows
+        run: cargo build --target x86_64-pc-windows-msvc
+        if: matrix.os == 'windows'
   
   publish-check:
     name: Publish Check
