@@ -111,17 +111,29 @@ jobs:
           path: target/x86_64-unknown-linux-musl/doc
 
   build:
-    name: Build
-    runs-on: ubuntu-latest
+    name: Build - ${{ matrix.os }} - ${{ matrix.rust }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        rust: [stable, beta]
+        os: [ubuntu, windows]
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{matrix.rust}}
       - uses: Swatinem/rust-cache@v2
-      - name: Setup
+      - name: Setup Linux
         run: |
           sudo apt -y install protobuf-compiler
           rustup target add x86_64-unknown-linux-musl
           cargo install just
+        if: matrix.os == 'ubuntu'
+      - name: Setup Windows
+        run: |
+          rustup target add x86_64-pc-windows-msvc
+          cargo install just
+        if: matrix.os == 'windows'
       - name: Build
         run: cargo build
   
