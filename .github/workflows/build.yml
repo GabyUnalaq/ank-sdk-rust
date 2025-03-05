@@ -125,23 +125,24 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Setup Linux
+        if: matrix.os == 'ubuntu'
         run: |
           sudo apt -y install protobuf-compiler
           rustup target add x86_64-unknown-linux-musl
           cargo install just
-        if: matrix.os == 'ubuntu'
       - name: Setup Windows
+        if: matrix.os == 'windows'
         run: |
+          choco install protoc
           rustup target add x86_64-pc-windows-msvc
           cargo install just
-        if: matrix.os == 'windows'
 
       - name: Build Linux
-        run: cargo build
         if: matrix.os == 'ubuntu'
+        run: cargo build
       - name: Build Windows
-        run: cargo build --target x86_64-pc-windows-msvc
         if: matrix.os == 'windows'
+        run: cargo build --target x86_64-pc-windows-msvc
   
   publish-check:
     name: Publish Check
