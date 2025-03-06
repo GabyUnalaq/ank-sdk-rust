@@ -124,23 +124,23 @@ jobs:
         id: set_target
         run: |
           if [ "${{ matrix.arch }}" == "amd64" ]; then
-            echo "CARGO_BUILD_TARGET=x86_64-unknown-linux-musl" >> $GITHUB_ENV
+            echo "TARGET=x86_64-unknown-linux-musl" >> $GITHUB_ENV
           elif [ "${{ matrix.arch }}" == "arm64" ]; then
-            echo "CARGO_BUILD_TARGET=aarch64-unknown-linux-musl" >> $GITHUB_ENV
+            echo "TARGET=aarch64-unknown-linux-musl" >> $GITHUB_ENV
           fi
       - name: Setup
         run: |
-          sudo apt -y install musl-tools protobuf-compiler
-          rustup target add ${CARGO_BUILD_TARGET}
+          sudo apt -y install protobuf-compiler
+          rustup target add ${TARGET}
           cargo install just
       - name: Build - ${{ matrix.arch }}
-        run: cargo build --release
+        run: cargo build --target ${TARGET} --release
       - name: Upload binary - ${{ matrix.arch }}
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: libankaios_sdk-${{ matrix.arch }}
-          path: target/${{ env.CARGO_BUILD_TARGET }}/release libankaios_sdk.rlib
+          path: target/${{ env.TARGET }}/release libankaios_sdk.rlib
 
   publish-check:
     name: Publish Check
