@@ -130,7 +130,7 @@ jobs:
           fi
       - name: Setup
         run: |
-          sudo apt -y install protobuf-compiler
+          sudo apt -y install musl-tools protobuf-compiler
           rustup target add ${CARGO_BUILD_TARGET}
           cargo install just
       - name: Build - ${{ matrix.arch }}
