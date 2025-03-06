@@ -135,12 +135,14 @@ jobs:
           cargo install just
       - name: Build - ${{ matrix.arch }}
         run: cargo build --target ${TARGET} --release
+      - name: List build artifacts
+        run: ls -alh target/${{ env.TARGET }}/release
       - name: Upload binary - ${{ matrix.arch }}
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: libankaios_sdk-${{ matrix.arch }}
-          path: target/${{ env.TARGET }}/release libankaios_sdk.rlib
+          path: target/${{ env.TARGET }}/release/libankaios_sdk.rlib
 
   publish-check:
     name: Publish Check
